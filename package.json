@@ -4,6 +4,8 @@
   "description": "Info474 Assignment 2 for data visualization",
   "main": "dist/index.html",
   "scripts": {
+    "start": "parcel index.html",
+    "build": "parcel build index.html --public-url https://anie0521.github.io/INFO474-Project/; rm -rf docs; mv dist docs;",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jisu Kim",
