@@ -1,7 +1,7 @@
 import React from "react";
 import { useFetch } from "./hooks/useFetch";
 import { scaleLinear, scaleBand } from "d3-scale";
-import { extent, max, min, bin, rollups } from "d3-array";
+import { extent, max, min, bin, rollups, filter } from "d3-array";
 import { scale } from "vega";
 import * as topojson from "topojson-client";
 import world from "../land-50m";
@@ -42,44 +42,17 @@ const App = () => {
     const margin = 20;
     const leftMargin = 50;
 
-    const totalVaccinationsExtent = extent(groupedData, d => +d[1].total_vaccinations);
+    const totalVaccinationsExtent = extent(groupedData, d => {return +d[1].total_vaccinations;});
     const xScale = scaleLinear().domain(totalVaccinationsExtent).range([leftMargin, size-margin]);
     const countries = groupedData.map(d => d[0]);
     const yScale = scaleBand().domain(countries).range([size - margin, margin]);
-    
-    const rects = groupedData.map(d => {
-      const row = d[1];
-      const x = xScale(+row.total_vaccinations);
-      const y = yScale(d[0]);
-      const barWidth = yScale.bandWidth();
-      return <rect x={0} y={y} height={barWidth} width={x} />;
-    });
-
-    const axisTextAlignmentFactor = 3;
-
-  
-    const histogramLeftPadding = 30;
-
-    const land = topojson.feature(world, world.objects.land);
-    const projection = d3.geoNaturalEarth1();
-    const path = d3.geoPath(projection);
-    //https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json
-    const mapPathString = path(land);
     }
 
     return (
         <div>
-              <svg width={size} height={size} style={{ border: "1px solid black" }}>
-                {rects}
-              </svg>
-              
-
-
-
-
-
             <h1>Exploratory Data Analysis, Assignment 2, INFO 474 SP 2021 by Jisu Kim</h1>
             <p>{loading && "Loading data!"}</p>
+
             <h2>About Data</h2>
             <p>This dataset shows the current vaccine status in the world in 2021. From this dataset, I want to observe <br></br>vaccinated percentage in the world with different forms of data visualization. 
                 Later, I hope people can understand vaccine status with this.</p>
@@ -91,109 +64,122 @@ const App = () => {
                 <li>Which country has the most vaccines?</li>
             </ol>
 
-            <h2>Which country is the most vaccinated?
-            </h2>
-            <div style={{margin: "10px"}}>
-              <h3>Total fully vaccinated people table by top 10 countries</h3>
-                <tbody>
-                  <tr>
-                    <th>Country</th>
-                    <th>Fully vaccinated</th>
-                  </tr>
-                  <tr>
-                    <td style={{padding: "2px 10px"}}>1. United States</td>
-                    <td>3,533,075,091</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>2. India</td>
-                    <td>511,332,420</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>3. Israel</td>
-                    <td>347,443,009</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>4. Turkey</td>
-                    <td>327,131,074</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>5. United Kingdom</td>
-                    <td>289,869,551</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>6. Germany</td>
-                    <td>273,038,264</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>7. Brazil</td>
-                    <td>252,081,830</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>8. England</td>
-                    <td>234,899,771</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 10px"}}>9. Italy</td>
-                    <td>211,520,297</td>
-                  </tr>
-                  <tr>
-                  <td style={{padding: "2px 2px"}}>10. France</td>
-                    <td>193,908,873</td>
-                  </tr>
-                </tbody>
-              </div>
-              <p>This data table shows top 10 fully vaccinated countries. As you can see this chart, 
-                <br></br> the United States is the most vaccinated country and most European countries are in top 10 list.
-              </p>
-              <h3>Total fully vaccinated people bar chart by countries</h3>
-              <svg width={size} height={size} style={{ border: "1px solid black" }}>
- {/*                {fullvaccineBins.map((bin, i) => {
-                  console.log(i, bin);
-                  return (
-                    <rect
-                      y={size - bin.length}
-                      width="25"
-                      height={bin.length}
-                      x={histogramLeftPadding + i * 40}
-                      style={{fill: "gray"}}
-                    />
-                  );
-                })} */}
-                <text
-                  x={size * 0.6}
-                  y={size / 2 - 170}
-                  textAnchor="end"
-                  style={{ fontSize: 20, fontFamily: "Gill Sans, sans serif", fill: "red" }}
-                >
-                - United States : 3,533,075,091
-                </text>
-                <text
-                  x={size / 2 + 5}
-                  y={size * 0.95}
-                  textAnchor="end"
-                  style={{ fontSize: 20, fontFamily: "Gill Sans, sans serif", fill: "black" }}
-                >
-                - India : 511,332,420
-                </text>
-              </svg>
-              <p>This bar chart indicates the information about total number of fully vaccinated people in country.
-              <br></br>The most vaccinated country is United States, and the second most vaccinated country is India.</p>
+            <h2>Which country is the most vaccinated?</h2>
 
-              <h3>geo data</h3>
- {/*              <svg width={size * 2} height={size} style={{ border: "1px solid black" }}>
-                <path d={mapPathString} fill="rgb(200, 200, 200)" />
-                {dataSmallSample.map((measurement) => {
-                  return (
-                    <circle
-                      transform={`translate(
-                        ${projection([measurement.country, measurement.country])})`}
-                      r="1.5"
-                    />
-                  );
-                })}
-              </svg> */}
+            <h3>Data Table: Daily vaccinated and Fully vaccinated by countries</h3>
+            <svg width="600" height="500" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-2/Sheet2?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="700" height="500"></iframe>
+                </foreignObject>
+            </svg>
+            <p>The data table shows the detailed information about how many people get vaccinted fully and daily.
+            <br></br>As you can see closely, the United States is the most number of daily vaccination and people fully vaccinted.
+            <br></br>Also, the daily vaccinations and the number of people fully vaccinated are proportional.
+            </p>
+
+            <h3>Bar Chart: Fully vaccinated countries(most recent data)</h3>
+            <svg width="500" height="500" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-1/Sheet1?:language=en&:display_count=y&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="500" height="500"></iframe>
+                </foreignObject>
+            </svg>
+            <p>This bar chart indicates the information about total number of fully vaccinated people in country.
+            <br></br>The most vaccinated country is United States. The number of fully vaccinated people in the U.S. is over 90M.
+            <br></br>And, the second most vaccinated country is India. The number of fully vaccinated people in India. is over 20M.
+            <br></br> The difference is almost 4 times more than those who have been vaccinated in both the United States and India.
+            </p>
+
+            <h3>Geo Graph: Fully vaccinated countries(most recent data)</h3>
+            <svg width="800" height="800" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-3/Sheet3?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="800" height="800"></iframe>
+                </foreignObject>
+            </svg>
+            <p>We can compare which countries get the most vaccinated fully by comparing the size of circle with geo graph.
+            <br></br>As you checked with table graph and bar graph, the United States has the biggest circle.
+            </p>
+            
+
             <h2>What is the most popular vaccine in the world?</h2>
+
+            <h3>Data Table: Total vaccines and people fully vaccinated</h3>
+            <svg width="600" height="500" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-4/Sheet4?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="700" height="500"></iframe>
+                </foreignObject>
+            </svg>
+            <p>Here is data table that shows total vaccinations and fully vaccinted by vaccines.
+            <br></br>The most popluar vaccine which is same as the highest number of people fully vaccinated is Johnson&Johnson, Moderna, Pfizer/BioTech.
+            <br></br>And the second highest vaccine is Sinopharm/Bejing, but there is no value for people fully vaccinted.
+            <br></br>Covaxin, Oxford/AstraZeneca is the third highest rank on the data table.
+            </p>
+            
+
+            <h3>Tree Map Table: Total vaccines</h3>
+            <svg width="700" height="400" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-5/Sheet5?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="700" height="500"></iframe>
+                </foreignObject>
+            </svg>
+            <p>This tree map table shows total vaccines by vaccine manufacturers. As you can see from previous data visualization.
+            <br></br>The most popular vaccines is Johnson&Johnson, Moderna, Pfizer/BioTech and it indicates with biggest square with blue color.
+            <br></br> However, the tables for the first highest ranking of vaccine and the second one show significant differences, but this graph does not show much difference on this graph.
+            </p>
+
             <h2>Which country has the most vaccines?</h2>
+
+            <h3>Data Table: Total vaccines</h3>
+            <svg width="400" height="700" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-6/Sheet6?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="400" height="700"></iframe>
+                </foreignObject>
+            </svg>
+            <p>This data table shows the relationship between countries and total vaccinations.
+            <br></br>There is no information on how many vaccines each country has in the actual dataset.
+            <br></br>However, from seeing how the number of total vaccinations, Vaccine reserves can be measured.
+            <br></br>The United States has the most vaccines, followed by China.
+            </p>
+
+            <h3>Tree Map Table: Vaccines by countries</h3>
+            <svg width="700" height="400" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-7/Sheet7?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="700" height="500"></iframe>
+                </foreignObject>
+            </svg>
+            <p>This tree map shows more details such as the relationship between vaccine manufacturers and countries.
+            <br></br>From this graph, we can check the United States has the most vaccines which is from Johnson&Johnson, Moderna, Pfizer/BioTech.</p>
+
+            <h3>Bar Chart: Total Vaccines and People fully vaccinated by countries)</h3>
+            <svg width="800" height="600" style={{ border: "1px solid black", marginBottom: "25px" }}>
+                <foreignObject width="100%" height="100%">
+                    <iframe src="https://public.tableau.com/views/INFO474-8/Sheet8?:language=en&:display_count=y&publish=yes&:origin=viz_share_link&:showVizHome=no&:embed=true"
+                    width="800" height="600"></iframe>
+                </foreignObject>
+            </svg>
+            <p>This bar graph shows the relationship between total vacciens and people fully vaccinted by countries.
+            <br></br>total vacciens and people fully vaccinated are proportional, so the United States is the highest number on the both values.</p>
+
+            <h2>Write-up</h2>
+            <ol>
+                <li>Which country is the most vaccinated?</li>
+                <li>What is the most popular vaccine in the world?</li>
+                <li>Which country has the most vaccines?</li>
+            </ol>
+
+            <p> From analyzing data and data visualization, I can answer these three qeustions. First of all, the most vaccinated countries
+                is the "United States." Over 90M people get vaccinated and over 2M people get vaccinated daily in the United States.
+                In order to see detailed information, I used the data table. And, to see the information visually, I created a bar graph and a geo graph.
+                Next, the most poplar vaccine is Johnson&Johnson, Moderna, Pfizer/BioTech in the world. The second highest is Sinopharm/Bejing and the third highest vaccine is Covaxin, Oxford/AstraZeneca.
+                Lastly, the country which has the most vaccien is the United States. There is no data about the vaccine retention, but we can assume through analyzing total vaccination and people fully vaccinated.
+                Therefore, I can see the result that the United States has the most vaccines and the vaccine is Johnson&Johnson, Moderna, Pfizer/BioTech.
+            </p>
         </div>
     );
 };
