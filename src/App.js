@@ -10,7 +10,7 @@ const App = () => {
     const [data, loading] = useFetch(
         "https://raw.githubusercontent.com/anie0521/INFO474-Project/main/country_vaccinations.csv"
       );
-    if(!loading) {
+/*     if(!loading) {
       const colNames = ["country", "date", "people_fully_vaccinated", "total_vaccinations", "vaccines"]
     
     let filteredData = data.filter((d) => {
@@ -46,7 +46,7 @@ const App = () => {
     const xScale = scaleLinear().domain(totalVaccinationsExtent).range([leftMargin, size-margin]);
     const countries = groupedData.map(d => d[0]);
     const yScale = scaleBand().domain(countries).range([size - margin, margin]);
-    }
+    } */
 
     return (
         <div>
